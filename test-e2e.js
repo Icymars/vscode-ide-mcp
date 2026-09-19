@@ -56,6 +56,32 @@ const MOCK_RESULTS = {
     variables: [{ name: "x", value: "42", type: "number", ref: 7 }],
   },
   debug_evaluate: { active: true, expression: "2+2", value: "4", isError: false },
+  execute_command: { command: "workbench.action.closeActiveEditor", result: null },
+  get_hover: {
+    active: true,
+    count: 1,
+    hovers: [{ text: "function activate(context: ExtensionContext) — avvia l'estensione" }],
+  },
+  get_diagnostics: {
+    active: true,
+    file: "file:///mock/extension.ts",
+    count: 1,
+    truncated: false,
+    diagnostics: [
+      {
+        severity: 1,
+        range: { start: 10, end: 10 },
+        source: "typescript",
+        message: "variabile non utilizzata",
+      },
+    ],
+  },
+  read_file: {
+    uri: "file:///mock/extension.ts",
+    length: 120,
+    content: "export function activate() { startBridge(); }",
+  },
+  write_file: { uri: "file:///mock/newfile.txt", saved: true, length: 4 },
 };
 
 const CALLS = [
@@ -71,6 +97,11 @@ const CALLS = [
   ["get_stack_frames", {}],
   ["get_variables", { variablesReference: 1 }],
   ["debug_evaluate", { expression: "2+2" }],
+  ["execute_command", { command: "workbench.action.closeActiveEditor", args: [] }],
+  ["get_hover", {}],
+  ["get_diagnostics", {}],
+  ["read_file", { uri: "file:///mock/extension.ts" }],
+  ["write_file", { uri: "file:///mock/newfile.txt", content: "ciao" }],
 ];
 
 let server;

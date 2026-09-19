@@ -93,6 +93,11 @@ I tool risultano disponibili come `vscode-ide_<tool>` (es.
 | `get_stack_frames` | Stack frame (richiede API proposta `DebugAdapterTracker`) |
 | `get_variables` | Variabili di uno scope di debug |
 | `debug_evaluate` | Evaluate un'espressione nella console di debug |
+| `execute_command` | Esegue un comando VS Code per ID, con argomenti opzionali |
+| `get_hover` | Informazioni hover del simbolo sotto il cursore (LSP) |
+| `get_diagnostics` | Errori/avvisi del file attivo (max 200 righe) |
+| `read_file` | Legge il contenuto di un file del workspace |
+| `write_file` | Crea o sovrascrive un file del workspace |
 
 ## Soluzione globale
 
@@ -106,8 +111,10 @@ indipendente dal linguaggio.
 - **"nessun IDE bridge raggiungibile"** → l'estensione non è caricata o il
   bridge non è avviato. Carica l'estensione (F5) e verifica che il comando
   `IDE MCP: Avvia bridge` funzioni.
-- **Porta 47810 già occupata** → cambia `PORT` in `src/ide/bridge.ts` (e
-  `src/mcp/server.ts`) poi rifai `npm run build`.
+- **Porta 47810 occupata** → il bridge prova automaticamente le porte
+  47811–47814; il server MCP prova lo stesso elenco nella stessa ordine.
+  Se vuoi cambiare la porta base, modifica `PORT` in `src/ide/bridge.ts` e
+  `PORTS` in `src/mcp/server.ts`, poi `npm run build`.
 - **Stack/variabili tornano "DebugAdapterTracker non disponibile"** → la versione
   di VS Code non espone l'API proposta; aggiorna VS Code all'ultima versione.
 

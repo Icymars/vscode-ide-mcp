@@ -3,18 +3,21 @@ import { executeIDECall } from "./calls";
 
 const HOST = "127.0.0.1";
 const PORT = 47810;
+const PORT_RETRIES = 5;
 
 let server: net.Server | null = null;
+let port = PORT;
 
 /**
  * Avvia un listener TCP dentro l'estensione. Ogni connessione riceve righe
  * JSON: {id, method, args} e risponde con {id, result} oppure {id, error}.
+ * Se la porta base è occupata, prova le PORTE successive (fino a PORT_RETRIES).
  */
 export function startBridge(): number {
   if (server) {
-    return PORT;
+    return port;
   }
-  server = net.createServer((socket) => {
+  const s = net.createServer((socket) => {
     let buf = "";
     socket.on("data", (data: Buffer) => {
       buf += data.toString();
@@ -38,8 +41,24 @@ export function startBridge(): number {
     socket.on("error", () => {});
     socket.on("close", () => {});
   });
-  server.listen(PORT, HOST);
-  return PORT;
+  server = s;
+  const attempt = (i: number): void => {
+    s.removeAllListeners("error");
+    s.on("error", (e: NodeJS.ErrnoException) => {
+      if (e.code === "EADDRINUSE") {
+        if (i + 1 < PORT_RETRIES) {
+          attempt(i + 1);
+        } else {
+          server = null;
+          port = PORT;
+        }
+      }
+    });
+    port = PORT + i;
+    s.listen(port, HOST);
+  };
+  attempt(0);
+  return port;
 }
 
 async function handleRequest(

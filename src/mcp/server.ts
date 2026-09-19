@@ -8,19 +8,23 @@ import * as net from "net";
 import { TOOLS, methodForTool } from "./tools";
 
 const HOST = "127.0.0.1";
-const PORT = 47810;
-const RETRIES = 3;
+const PORTS = [47810, 47811, 47812, 47813, 47814];
 const RETRY_DELAY_MS = 500;
 
 function callIDE(method: string, args: Record<string, unknown>): Promise<unknown> {
   return new Promise((resolve, reject) => {
-    let attempt = 0;
     let settled = false;
+    let portIdx = 0;
 
-    function tryConnect() {
-      attempt += 1;
+    function tryPort() {
+      if (settled) return;
+      if (portIdx >= PORTS.length) {
+        settled = true;
+        reject(new Error("nessun IDE bridge raggiungibile: nessuna porta disponibile"));
+        return;
+      }
       const id = Math.random().toString(36).slice(2);
-      const socket = net.connect(PORT, HOST, () => {
+      const socket = net.connect(PORTS[portIdx], HOST, () => {
         socket.write(JSON.stringify({ id, method, args }) + "\n");
       });
       const timer = setTimeout(() => {
@@ -42,16 +46,12 @@ function callIDE(method: string, args: Record<string, unknown>): Promise<unknown
       socket.on("error", (e: Error) => {
         clearTimeout(timer);
         if (settled) return;
-        if (attempt < RETRIES) {
-          setTimeout(tryConnect, RETRY_DELAY_MS);
-        } else {
-          settled = true;
-          reject(new Error("nessun IDE bridge raggiungibile: " + e.message));
-        }
+        portIdx += 1;
+        setTimeout(tryPort, RETRY_DELAY_MS);
       });
     }
 
-    tryConnect();
+    tryPort();
   });
 }
 

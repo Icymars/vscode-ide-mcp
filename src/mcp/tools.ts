@@ -122,6 +122,43 @@ export const TOOLS: McpTool[] = [
       ["expression"]
     ),
   },
+  {
+    name: "execute_command",
+    description: "Esegue un comando VS Code per ID, con argomenti opzionali.",
+    inputSchema: base(
+      {
+        command: { type: "string", description: "ID del comando (es. 'workbench.action.closeActiveEditor')" },
+        args: { type: "array", description: "Argomenti opzionali da passare al comando" },
+      },
+      ["command"]
+    ),
+  },
+  {
+    name: "get_hover",
+    description: "Restituisce le informazioni hover (tipo, documentazione) del simbolo sotto il cursore (LSP).",
+    inputSchema: base({}),
+  },
+  {
+    name: "get_diagnostics",
+    description: "Restituisce i diagnostics (errori/avvisi) del file attivo (max 200 righe).",
+    inputSchema: base({}),
+  },
+  {
+    name: "read_file",
+    description: "Legge il contenuto di un file del workspace.",
+    inputSchema: base({ uri: { type: "string" }}, ["uri"]),
+  },
+  {
+    name: "write_file",
+    description: "Scrive (crea o sovrascrive) il contenuto di un file del workspace.",
+    inputSchema: base(
+      {
+        uri: { type: "string" },
+        content: { type: "string" },
+      },
+      ["uri", "content"]
+    ),
+  },
 ];
 
 /** Il nome del tool è identico al metodo IDE: mappatura identità. */

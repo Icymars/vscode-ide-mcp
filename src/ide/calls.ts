@@ -222,6 +222,67 @@ async function debugEvaluate(a: Args): Promise<Record<string, unknown>> {
   return result;
 }
 
+async function executeCommand(a: Args): Promise<Record<string, unknown>> {
+  const command = String(a.command);
+  const args = (a.args as unknown[]) || [];
+  const result = await vscode.commands.executeCommand(command, ...args);
+  return { command, result: result === undefined ? null : result };
+}
+
+async function getHover(): Promise<Record<string, unknown>> {
+  const ed = vscode.window.activeTextEditor;
+  if (!ed) return { active: false };
+  const hovers = await vscode.languages.hover(
+    new vscode.Location(ed.document.uri, ed.selection.active)
+  );
+  const items: Array<Record<string, unknown>> = [];
+  for (const h of hovers || []) {
+    for (const md of h.contents) {
+      if (typeof md === "string") {
+        items.push({ text: md });
+      } else if (md && "value" in md) {
+        items.push({ text: (md as { value: string }).value });
+      }
+    }
+  }
+  return { active: true, count: items.length, hovers: items };
+}
+
+async function getDiagnostics(): Promise<Record<string, unknown>> {
+  const ed = vscode.window.activeTextEditor;
+  if (!ed) return { active: false };
+  const MAX = 200;
+  const list = vscode.languages.getDiagnostics().get(ed.document.uri) || [];
+  const diagnostics = list.slice(0, MAX).map((d) => ({
+    severity: d.severity,
+    range: { start: d.range.start.line, end: d.range.end.line },
+    source: d.source,
+    message: d.message,
+  }));
+  return {
+    active: true,
+    file: ed.document.uri.toString(),
+    count: list.length,
+    truncated: list.length > MAX,
+    diagnostics,
+  };
+}
+
+async function readFile(a: Args): Promise<Record<string, unknown>> {
+  const uri = toUri(a.uri);
+  const doc = await vscode.workspace.openTextDocument(uri);
+  const text = doc.getText();
+  return { uri: doc.uri.toString(), length: text.length, content: text };
+}
+
+async function writeFile(a: Args): Promise<Record<string, unknown>> {
+  const uri = toUri(a.uri);
+  const content = String(a.content ?? "");
+  const doc = await vscode.workspace.openTextDocument({ uri, content });
+  await doc.save();
+  return { uri: uri.toString(), saved: true, length: content.length };
+}
+
 /** Cose le chiamate supportate e le spedisce al dispatcher. */
 export async function executeIDECall(
   method: string,
@@ -252,6 +313,16 @@ export async function executeIDECall(
       return getVariables(args);
     case "debug_evaluate":
       return debugEvaluate(args);
+    case "execute_command":
+      return executeCommand(args);
+    case "get_hover":
+      return getHover();
+    case "get_diagnostics":
+      return getDiagnostics();
+    case "read_file":
+      return readFile(args);
+    case "write_file":
+      return writeFile(args);
     default:
       throw new Error(`metodo sconosciuto: ${method}`);
   }
