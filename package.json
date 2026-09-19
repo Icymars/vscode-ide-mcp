@@ -3,7 +3,7 @@
   "displayName": "VS Code IDE MCP Bridge",
   "description": "Espone la navigazione LSP e il debug nativo di VS Code come server MCP standard, utilizzabile da qualsiasi agente AI con supporto MCP (Kilo, Cursor, Cline, ecc.)",
   "version": "0.1.0",
-  "publisher": "riccardo-statuto",
+  "publisher": "RiccardoStatuto",
   "author": "Riccardo Statuto <riccardo.statuto@gmail.com>",
   "license": "MIT",
   "repository": {

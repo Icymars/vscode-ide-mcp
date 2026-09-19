@@ -71,7 +71,7 @@ per Kilo:
 ```
 
 Dopo aver installato l'estensione, `dir_estensione` è
-`~/.vscode/extensions/riccardo-statuto.vscode-ide-mcp-<versione>/out/mcp-server.js`
+`~/.vscode/extensions/RiccardoStatuto.vscode-ide-mcp-<versione>/out/mcp-server.js`
 (oppure `Code --list-extensions` + percorso installato).
 
 I tool risultano disponibili come `vscode-ide_<tool>` (es.
