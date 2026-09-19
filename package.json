@@ -1,12 +1,18 @@
 {
   "name": "vscode-ide-mcp",
   "displayName": "VS Code IDE MCP Bridge",
-  "description": "Espone la navigazione LSP e il debug nativo di VS Code come server MCP per Kilo",
+  "description": "Espone la navigazione LSP e il debug nativo di VS Code come server MCP standard, utilizzabile da qualsiasi agente AI con supporto MCP (Kilo, Cursor, Cline, ecc.)",
   "version": "0.1.0",
-  "publisher": "aidiafit",
+  "publisher": "riccardo-statuto",
+  "author": "Riccardo Statuto <riccardo.statuto@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Icymars/vscode-ide-mcp.git"
+  },
+  "qna": false,
   "engines": {
-    "vscode": "^1.95.0"
+    "vscode": "^1.138.0"
   },
   "main": "./out/extension.js",
   "activationEvents": [
@@ -28,6 +34,7 @@
     "build": "node esbuild.js",
     "watch": "node esbuild.js --watch",
     "test": "node test-mcp.js",
+    "test:e2e": "node test-e2e.js",
     "compile": "tsc -p tsconfig.json",
     "clean": "node -e \"require('fs').rmSync('out',{recursive:true,force:true});require('fs').rmSync('.vscode-test',{recursive:true,force:true})\""
   },

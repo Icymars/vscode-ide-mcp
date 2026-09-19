@@ -1,0 +1,13 @@
+.git/
+.gitignore
+.kilo/
+.vscode/
+node_modules/
+src/
+test-mcp.js
+test-e2e.js
+esbuild.js
+tsconfig.json
+package-lock.json
+.vscodeignore
+out/*.map

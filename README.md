@@ -1,16 +1,20 @@
 # vscode-ide-mcp
 
-Ponte tra gli strumenti nativi di VS Code e l'agente Kilo: espone la
-navigazione LSP (definizioni, riferimenti, outline) e il debug nativo
-(breakpoint, stepping, stack frame, variabili, evaluate) come **server MCP**.
+Ponte tra gli strumenti nativi di VS Code e qualsiasi agente AI con
+supporto MCP (Kilo, Cursor, Cline, ecc.): espone la navigazione LSP
+(definizioni, riferimenti, outline) e il debug nativo (breakpoint, stepping,
+stack frame, variabili, evaluate) come **server MCP standard** (protocollo
+MCP su stdio). Funziona con qualsiasi client MCP, non solo Kilo.
 
 Architettura:
 
 - Un'**estensione VS Code** (TypeScript) parte, all'avvio, di un listener
   TCP (host 127.0.0.1, porta **47810**) nel processo extension host, dove il
   modulo `vscode` è disponibile.
-- Un **server MCP** (`out/mcp-server.js`) gira come processo figlio lanciato da
-  Kilo (stdio) e si collega al bridge per eseguire le chiamate `vscode.*`.
+- Un **server MCP** (`out/mcp-server.js`) gira come processo figlio lanciato
+  dal tuo agente (stdio) e si collega al bridge per eseguire le chiamate
+  `vscode.*`. Essendo un server MCP standard, lo stesso file funziona con
+  qualsiasi client MCP, non solo Kilo.
 
 ## Installazione e build
 
@@ -31,38 +35,44 @@ Carica l'estensione:
 - Oppure genera un `.vsix` (`npm run package` richiede `@vscode/vsce`) e
   installalo con `code --install-extension`.
 
-## Registra il server MCP in Kilo
+## Registra il server MCP nel tuo agente
 
-Il server MCP va dichiarato nel file di configurazione di Kilo, così l'agente
-vede i tool. Due scelte:
+Il server è standard: lo stesso `out/mcp-server.js` si registra nella
+configurazione MCP del tuo agente (Kilo, Cursor, Cline, ecc.). Di seguito
+l'esempio per Kilo; gli altri agenti usano il proprio formato di
+configurazione (es. Cursor: `mcp.json`, Cline: pannello MCP). Due scelte
+per Kilo:
 
-**Livello progetto** — in `E:\Aidiatech\app\aidiafit\kilo.json` (o questo
-progetto):
-
-```jsonc
-{
-  "mcp": {
-    "vscode-ide": {
-      "type": "local",
-      "command": ["node", "E:/Aidiatech/app/vscode-ide-mcp/out/mcp-server.js"]
-    }
-  }
-}
-```
-
-**Livello globale** — in `~/.config/kilo/kilo.json` (su questo PC:
-`C:\Users\icyma\.config\kilo\kilo.json`), così funziona in tutti i progetti:
+**Livello progetto** — in `kilo.json` nella radice del progetto corrente:
 
 ```jsonc
 {
   "mcp": {
     "vscode-ide": {
       "type": "local",
-      "command": ["node", "E:/Aidiatech/app/vscode-ide-mcp/out/mcp-server.js"]
+      "command": ["node", "<dir_estensione>/out/mcp-server.js"]
     }
   }
 }
 ```
+
+**Livello globale** — in `~/.config/kilo/kilo.json` (Windows:
+`%USERPROFILE%\.config\kilo\kilo.json`), così funziona in tutti i progetti:
+
+```jsonc
+{
+  "mcp": {
+    "vscode-ide": {
+      "type": "local",
+      "command": ["node", "<dir_estensione>/out/mcp-server.js"]
+    }
+  }
+}
+```
+
+Dopo aver installato l'estensione, `dir_estensione` è
+`~/.vscode/extensions/riccardo-statuto.vscode-ide-mcp-<versione>/out/mcp-server.js`
+(oppure `Code --list-extensions` + percorso installato).
 
 I tool risultano disponibili come `vscode-ide_<tool>` (es.
 `vscode-ide_go_to_definition`).
