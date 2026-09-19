@@ -58,7 +58,7 @@ progetto):
   "mcp": {
     "vscode-ide": {
       "type": "local",
-      "command": ["node", "C:/Users/icyma/AppData/Local/Temp/.../mcp-server.js"]
+      "command": ["node", "E:/Aidiatech/app/vscode-ide-mcp/out/mcp-server.js"]
     }
   }
 }
