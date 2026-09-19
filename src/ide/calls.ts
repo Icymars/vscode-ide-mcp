@@ -14,7 +14,14 @@ import * as vscode from "vscode";
 type Args = Record<string, unknown>;
 
 function toUri(u: unknown): vscode.Uri {
-  return typeof u === "string" ? vscode.Uri.parse(u) : (u as vscode.Uri);
+  if (typeof u === "string") {
+    // Percorso file Windows (es. E:\...) → Uri.file; altrimenti URI standard
+    if (/^[A-Za-z]:[\\/]/.test(u)) {
+      return vscode.Uri.file(u);
+    }
+    return vscode.Uri.parse(u);
+  }
+  return u as vscode.Uri;
 }
 
 function activeEditorSnapshot(): Record<string, unknown> {
@@ -75,11 +82,11 @@ async function getOutline(a: Args): Promise<Record<string, unknown>> {
   const uri = toUri(a.uri);
   const doc = await vscode.workspace.openTextDocument(uri);
   await vscode.window.showTextDocument(doc, { preview: false });
-  await vscode.commands.executeCommand("editor.action.showOutline");
+  await vscode.commands.executeCommand("workbench.action.showAllSymbols");
   return {
     openedOutlineView: true,
     file: doc.uri.toString(),
-    note: "L'outline del file è aperto nella vista Simboli.",
+    note: "La vista Simboli è aperta nella sidebar; l'outline del file è visibile lì.",
   };
 }
 
@@ -232,27 +239,22 @@ async function executeCommand(a: Args): Promise<Record<string, unknown>> {
 async function getHover(): Promise<Record<string, unknown>> {
   const ed = vscode.window.activeTextEditor;
   if (!ed) return { active: false };
-  const hovers = await vscode.languages.hover(
-    new vscode.Location(ed.document.uri, ed.selection.active)
-  );
-  const items: Array<Record<string, unknown>> = [];
-  for (const h of hovers || []) {
-    for (const md of h.contents) {
-      if (typeof md === "string") {
-        items.push({ text: md });
-      } else if (md && "value" in md) {
-        items.push({ text: (md as { value: string }).value });
-      }
-    }
-  }
-  return { active: true, count: items.length, hovers: items };
+  await vscode.commands.executeCommand("editor.action.showHover");
+  return {
+    active: true,
+    file: ed.document.uri.toString(),
+    note: "L'hover del simbolo sotto il cursore è mostrato nell'editor.",
+  };
 }
 
 async function getDiagnostics(): Promise<Record<string, unknown>> {
   const ed = vscode.window.activeTextEditor;
   if (!ed) return { active: false };
   const MAX = 200;
-  const list = vscode.languages.getDiagnostics().get(ed.document.uri) || [];
+  // getDiagnostics() restituisce Diagnostic[][] (una lista per documento,
+  // senza URI): prendiamo il primo documento con diagnostics.
+  const lists = vscode.languages.getDiagnostics();
+  const list = (lists && lists.length > 0 ? lists.find((l) => l.length > 0) : null) || [];
   const diagnostics = list.slice(0, MAX).map((d) => ({
     severity: d.severity,
     range: { start: d.range.start.line, end: d.range.end.line },
@@ -264,6 +266,7 @@ async function getDiagnostics(): Promise<Record<string, unknown>> {
     file: ed.document.uri.toString(),
     count: list.length,
     truncated: list.length > MAX,
+    approx: "primo documento con diagnostics (l'API non espone gli URI dei documenti)",
     diagnostics,
   };
 }
