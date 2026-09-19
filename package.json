@@ -35,6 +35,9 @@
     "watch": "node esbuild.js --watch",
     "test": "node test-mcp.js",
     "test:e2e": "node test-e2e.js",
+    "version:major": "npm version major",
+    "version:minor": "npm version minor",
+    "version:patch": "npm version patch",
     "compile": "tsc -p tsconfig.json",
     "clean": "node -e \"require('fs').rmSync('out',{recursive:true,force:true});require('fs').rmSync('.vscode-test',{recursive:true,force:true})\""
   },

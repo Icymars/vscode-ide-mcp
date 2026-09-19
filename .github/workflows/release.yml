@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dipendenze
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Confeziona il vsix
+        run: npx --yes @vscode/vsce package --no-dependencies
+      - name: Crea la GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          file: |
+            *.vsix
+          fail_if_not_exists: true
+          release_name: ${{ github.ref_name }}
+      - name: Login publisher
+        run: npx --yes @vscode/vsce login
+        env:
+          PUBLISHER: "RiccardoStatuto"
+          PUBLISHER_TOKEN: ${{ secrets.VSCE_PUBLISHER_TOKEN }}
+      - name: Pubblica sul Marketplace
+        run: npx --yes @vscode/vsce publish

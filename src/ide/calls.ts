@@ -257,7 +257,9 @@ async function getDiagnostics(): Promise<Record<string, unknown>> {
   const list = (lists && lists.length > 0 ? lists.find((l) => l.length > 0) : null) || [];
   const diagnostics = list.slice(0, MAX).map((d) => ({
     severity: d.severity,
-    range: { start: d.range.start.line, end: d.range.end.line },
+    range: d.range
+      ? { start: d.range.start.line, end: d.range.end.line }
+      : null,
     source: d.source,
     message: d.message,
   }));
@@ -281,9 +283,12 @@ async function readFile(a: Args): Promise<Record<string, unknown>> {
 async function writeFile(a: Args): Promise<Record<string, unknown>> {
   const uri = toUri(a.uri);
   const content = String(a.content ?? "");
-  const doc = await vscode.workspace.openTextDocument({ uri, content });
-  await doc.save();
-  return { uri: uri.toString(), saved: true, length: content.length };
+  const doc = await vscode.workspace.openTextDocument(uri);
+  const edit = new vscode.WorkspaceEdit();
+  edit.replace(doc.uri, new vscode.Range(0, 0, doc.lineCount, 0), content);
+  await vscode.workspace.applyEdit(edit);
+  const saved = await doc.save();
+  return { uri: uri.toString(), saved, length: content.length };
 }
 
 /** Cose le chiamate supportate e le spedisce al dispatcher. */
