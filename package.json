@@ -1,0 +1,43 @@
+{
+  "name": "vscode-ide-mcp",
+  "displayName": "VS Code IDE MCP Bridge",
+  "description": "Espone la navigazione LSP e il debug nativo di VS Code come server MCP per Kilo",
+  "version": "0.1.0",
+  "publisher": "aidiafit",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscodeIdeMcp.startBridge",
+        "title": "IDE MCP: Avvia bridge"
+      },
+      {
+        "command": "vscodeIdeMcp.stopBridge",
+        "title": "IDE MCP: Ferma bridge"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "test": "node test-mcp.js",
+    "compile": "tsc -p tsconfig.json",
+    "clean": "node -e \"require('fs').rmSync('out',{recursive:true,force:true});require('fs').rmSync('.vscode-test',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.138.0",
+    "esbuild": "^0.21.5",
+    "typescript": "^5.4.5"
+  }
+}
