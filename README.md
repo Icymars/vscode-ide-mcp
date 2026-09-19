@@ -13,8 +13,33 @@ Architettura:
   modulo `vscode` è disponibile.
 - Un **server MCP** (`out/mcp-server.js`) gira come processo figlio lanciato
   dal tuo agente (stdio) e si collega al bridge per eseguire le chiamate
-  `vscode.*`. Essendo un server MCP standard, lo stesso file funziona con
-  qualsiasi client MCP, non solo Kilo.
+   `vscode.*`. Essendo un server MCP standard, lo stesso file funziona con
+   qualsiasi client MCP, non solo Kilo.
+
+## Perché scegliere questo progetto
+
+- **Compatibilità universale** — il server usa il trasporto **stdio**: funziona
+  con qualsiasi agente con supporto MCP (Kilo, Cursor, Cline, opencode,
+  Claude Desktop, ecc.), senza configurazione HTTP/SSE né token.
+- **Semplicità** — due soli componenti (estensione + server stdio) e zero
+  impostazioni: né autenticazione, né TLS, né problemi CORS/Origin.
+- **Footprint minimo** — pacchetto di ~126 KB; nessun server HTTP da
+  mantenere.
+- **Sicurezza by default** — comunicazione solo su loopback (127.0.0.1);
+  nessuna superficie di rete esposta.
+- **Focalizzato** — 17 tool per navigazione LSP (definizioni, riferimenti,
+  outline, hover, diagnostics), comandi VS Code, file del workspace e debug
+  nativo: il nucleo essenziale per far lavorare un agente dentro l'IDE.
+
+### Quando valutare un'alternativa
+
+Se ti serve un toolkit più ampio (terminale, ricerca full-text, LSP avanzato
+come rename, call hierarchy, completioni) oppure un endpoint HTTP/SSE con
+auth/TLS, valuta
+[nabheet/vscode-mcp-server](https://github.com/nabheet/vscode-mcp-server)
+(49 tool, trasporto HTTP con retry di porta e publishing automatica).
+Per il nucleo "navigazione + comandi + file + debug" con il minimo di
+complessità, questo progetto è la scelta giusta.
 
 ## Installazione e build
 
