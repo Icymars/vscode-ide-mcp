@@ -287,11 +287,11 @@ async function writeFile(a: Args): Promise<Record<string, unknown>> {
   try {
     doc = await vscode.workspace.openTextDocument(uri);
   } catch {
-    // File inesistente: si crea con il contenuto via WorkspaceEdit
+    // File inesistente: lo creo vuoto, poi lo apro e ci scrivo il contenuto
     const createEdit = new vscode.WorkspaceEdit();
-    createEdit.createFile(uri, { content, overwrite: true });
+    createEdit.createFile(uri);
     await vscode.workspace.applyEdit(createEdit);
-    return { uri: uri.toString(), created: true, length: content.length };
+    doc = await vscode.workspace.openTextDocument(uri);
   }
   const edit = new vscode.WorkspaceEdit();
   edit.replace(doc.uri, new vscode.Range(0, 0, doc.lineCount, 0), content);
