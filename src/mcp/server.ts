@@ -1,11 +1,7 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  ListToolsRequestSchema,
-  CallToolRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
 import * as net from "net";
-import { TOOLS, methodForTool } from "./tools";
+import { TOOLS } from "./tools";
 
 const HOST = "127.0.0.1";
 const PORTS = [47810, 47811, 47812, 47813, 47814];
@@ -56,26 +52,30 @@ function callIDE(method: string, args: Record<string, unknown>): Promise<unknown
 }
 
 async function main(): Promise<void> {
-  const server = new Server(
+  // API corrente: McpServer + registerTool sostituisce la classe Server
+  // (deprecata) e i due setRequestHandler per tools/list e tools/call.
+  const mcp = new McpServer(
     { name: "vscode-ide-mcp", version: "0.1.0" },
     { capabilities: { tools: {} } }
   );
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: TOOLS,
-  }));
-
-  server.setRequestHandler(CallToolRequestSchema, async (req) => {
-    const args = (req.params.arguments as Record<string, unknown>) || {};
-    const method = methodForTool(req.params.name);
-    const result = await callIDE(method, args);
-    const text =
-      typeof result === "string" ? result : JSON.stringify(result, null, 2);
-    return { content: [{ type: "text", text }] };
-  });
+  for (const t of TOOLS) {
+    mcp.registerTool(
+      t.name,
+      {
+        description: t.description,
+        inputSchema: t.inputSchema
+      },
+      async (args: any) => {
+        const result = await callIDE(t.name, (args as Record<string, unknown>) || {});
+        const text = typeof result === "string" ? result : JSON.stringify(result, null, 2);
+        return { content: [{ type: "text" as const, text }] };
+      }
+    );
+  }
 
   const transport = new StdioServerTransport();
-  await server.connect(transport);
+  await mcp.connect(transport);
 }
 
 main().catch((e) => {

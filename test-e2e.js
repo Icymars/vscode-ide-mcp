@@ -187,7 +187,7 @@ async function main() {
   await startServer();
 
   const init = await rpc(1, "initialize", {
-    protocolVersion: "2024-11-05",
+    protocolVersion: "2025-11-25",
     capabilities: {},
     clientInfo: { name: "e2e", version: "0.0.0" },
   });

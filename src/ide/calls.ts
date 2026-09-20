@@ -15,8 +15,8 @@ type Args = Record<string, unknown>;
 
 function toUri(u: unknown): vscode.Uri {
   if (typeof u === "string") {
-    // Percorso file Windows (es. E:\...) → Uri.file; altrimenti URI standard
-    if (/^[A-Za-z]:[\\/]/.test(u)) {
+    // Percorso file Windows (es. E:...) → Uri.file; altrimenti URI standard
+    if (/^[A-Za-z]:[\/]/.test(u)) {
       return vscode.Uri.file(u);
     }
     return vscode.Uri.parse(u);
@@ -33,7 +33,7 @@ function activeEditorSnapshot(): Record<string, unknown> {
   return {
     active: true,
     uri: ed.document.uri.toString(),
-    fileName: ed.document.uri.fsPath.split(/[\\/]/).pop(),
+    fileName: ed.document.uri.fsPath.split(/[\/]/).pop(),
     languageId: ed.document.languageId,
     cursorLine: sel.active.line,
     cursorCol: sel.active.character,
@@ -251,11 +251,11 @@ async function getDiagnostics(): Promise<Record<string, unknown>> {
   const ed = vscode.window.activeTextEditor;
   if (!ed) return { active: false };
   const MAX = 200;
-  // getDiagnostics() restituisce Diagnostic[][] (una lista per documento,
-  // senza URI): prendiamo il primo documento con diagnostics.
-  const lists = vscode.languages.getDiagnostics();
-  const list = (lists && lists.length > 0 ? lists.find((l) => l.length > 0) : null) || [];
-  const diagnostics = list.slice(0, MAX).map((d) => ({
+  // Versione corrente dell'API: la chiamata getDiagnostics() senza argomento
+  // è sostituita dal sovraccarico getDiagnostics(uri), che restituisce i diagnostics del
+  // documento attivo ed espone l'URI.
+  const all = vscode.languages.getDiagnostics(ed.document.uri);
+  const diagnostics = all.slice(0, MAX).map((d) => ({
     severity: d.severity,
     range: d.range
       ? { start: d.range.start.line, end: d.range.end.line }
@@ -266,9 +266,8 @@ async function getDiagnostics(): Promise<Record<string, unknown>> {
   return {
     active: true,
     file: ed.document.uri.toString(),
-    count: list.length,
-    truncated: list.length > MAX,
-    approx: "primo documento con diagnostics (l'API non espone gli URI dei documenti)",
+    count: all.length,
+    truncated: all.length > MAX,
     diagnostics,
   };
 }
