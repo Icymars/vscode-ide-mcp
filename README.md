@@ -54,11 +54,26 @@ To develop the extension locally:
 npm run watch         # esbuild in watch mode
 ```
 
-Load the extension:
+To load and test it, open this folder in VS Code and press F5
+(a new Extension Development Host window is launched).
 
-- In VS Code: open this folder, press F5 (Extension Development Host).
-- Or produce a `.vsix` (`npm run package` requires `@vscode/vsce`) and
-  install it with `code --install-extension`.
+To produce a distributable `.vsix` package:
+
+```bash
+npm run build
+npx --yes @vscode/vsce package --no-dependencies
+```
+
+This writes `vscode-ide-mcp-bridge-<version>.vsix` in the project root;
+all runtime dependencies are already bundled by esbuild into `out/`,
+so `--no-dependencies` keeps the package lean. Install locally with:
+
+```bash
+code --install-extension vscode-ide-mcp-bridge-<version>.vsix
+```
+
+The same artifact is also attached to each GitHub Release created by the
+release pipeline (triggered when a `vX.Y.Z` tag is pushed).
 
 ## Registering the MCP server in your agent
 
@@ -95,7 +110,7 @@ example; other agents use their own configuration format (e.g. Cursor:
 ```
 
 After installing the extension, `extension_dir` is
-`~/.vscode/extensions/RiccardoStatuto.vscode-ide-mcp-<version>/out/mcp-server.js`
+`~/.vscode/extensions/RiccardoStatuto.vscode-ide-mcp-bridge-<version>/out/mcp-server.js`
 (see also `code --list-extensions` + installed path).
 
 The tools become available as `vscode-ide_<tool>` (e.g.
