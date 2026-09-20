@@ -5,6 +5,10 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+  releases: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -14,7 +18,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: Install dipendenze
         run: npm ci
       - name: Build
@@ -24,10 +28,10 @@ jobs:
       - name: Crea la GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          file: |
+          files: |
             *.vsix
-          fail_if_not_exists: true
-          release_name: ${{ github.ref_name }}
+          fail_on_unmatched_files: true
+          name: ${{ github.ref_name }}
       - name: Login publisher
         run: npx --yes @vscode/vsce login
         env:
