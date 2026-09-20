@@ -1,149 +1,149 @@
 # vscode-ide-mcp
 
-Ponte tra gli strumenti nativi di VS Code e qualsiasi agente AI con
-supporto MCP (Kilo, Cursor, Cline, ecc.): espone la navigazione LSP
-(definizioni, riferimenti, outline) e il debug nativo (breakpoint, stepping,
-stack frame, variabili, evaluate) come **server MCP standard** (protocollo
-MCP su stdio). Funziona con qualsiasi client MCP, non solo Kilo.
+A bridge between VS Code's native tools and any AI agent with MCP
+support (Kilo, Cursor, Cline, etc.): it exposes LSP navigation
+(definitions, references, outline) and native debugging (breakpoints,
+stepping, stack frames, variables, evaluate) as a **standard MCP server**
+(MCP protocol over stdio). It works with any MCP client, not just Kilo.
 
-Architettura:
+Architecture:
 
-- Un'**estensione VS Code** (TypeScript) parte, all'avvio, di un listener
-  TCP (host 127.0.0.1, porta **47810**) nel processo extension host, dove il
-  modulo `vscode` è disponibile.
-- Un **server MCP** (`out/mcp-server.js`) gira come processo figlio lanciato
-  dal tuo agente (stdio) e si collega al bridge per eseguire le chiamate
-   `vscode.*`. Essendo un server MCP standard, lo stesso file funziona con
-   qualsiasi client MCP, non solo Kilo.
+- A **VS Code extension** (TypeScript) starts a TCP listener (host
+  127.0.0.1, port **47810**) in the extension host process on startup,
+  where the `vscode` module is available.
+- An **MCP server** (`out/mcp-server.js`) runs as a child process launched
+  by your agent (stdio) and connects to the bridge to perform `vscode.*`
+  calls. Being a standard MCP server, the same file works with any MCP
+  client, not just Kilo.
 
-## Perché scegliere questo progetto
+## Why this project
 
-- **Compatibilità universale** — il server usa il trasporto **stdio**: funziona
-  con qualsiasi agente con supporto MCP (Kilo, Cursor, Cline, opencode,
-  Claude Desktop, ecc.), senza configurazione HTTP/SSE né token.
-- **Semplicità** — due soli componenti (estensione + server stdio) e zero
-  impostazioni: né autenticazione, né TLS, né problemi CORS/Origin.
-- **Footprint minimo** — pacchetto di ~126 KB; nessun server HTTP da
-  mantenere.
-- **Sicurezza by default** — comunicazione solo su loopback (127.0.0.1);
-  nessuna superficie di rete esposta.
-- **Focalizzato** — 17 tool per navigazione LSP (definizioni, riferimenti,
-  outline, hover, diagnostics), comandi VS Code, file del workspace e debug
-  nativo: il nucleo essenziale per far lavorare un agente dentro l'IDE.
+- **Universal compatibility** — the server uses the **stdio** transport: it
+  works with any MCP-capable agent (Kilo, Cursor, Cline, opencode,
+  Claude Desktop, etc.), with no HTTP/SSE configuration and no tokens.
+- **Simplicity** — only two components (extension + stdio server) and zero
+  configuration: no auth, no TLS, no CORS/Origin issues.
+- **Minimal footprint** — ~126 KB package; no HTTP server to maintain.
+- **Secure by default** — communication is loopback-only (127.0.0.1);
+  no exposed network surface.
+- **Focused** — 17 tools for LSP navigation (definitions, references,
+  outline, hover, diagnostics), VS Code commands, workspace files and
+  native debugging: the essential core for letting an agent work inside the
+  IDE.
 
-### Quando valutare un'alternativa
+### When to consider an alternative
 
-Se ti serve un toolkit più ampio (terminale, ricerca full-text, LSP avanzato
-come rename, call hierarchy, completioni) oppure un endpoint HTTP/SSE con
-auth/TLS, valuta
+If you need a broader toolkit (terminal, full-text search, advanced LSP
+such as rename, call hierarchy, completions) or an HTTP/SSE endpoint with
+auth/TLS, consider
 [nabheet/vscode-mcp-server](https://github.com/nabheet/vscode-mcp-server)
-(49 tool, trasporto HTTP con retry di porta e publishing automatica).
-Per il nucleo "navigazione + comandi + file + debug" con il minimo di
-complessità, questo progetto è la scelta giusta.
+(49 tools, HTTP transport with port retry and automatic publishing).
+For the "navigation + commands + files + debugging" core with minimal
+complexity, this project is the right choice.
 
-## Installazione e build
+## Installation and build
 
 ```bash
 npm install
-npm run build        # genera out/extension.js e out/mcp-server.js
+npm run build        # generates out/extension.js and out/mcp-server.js
 ```
 
-Per sviluppare l'estensione in locale:
+To develop the extension locally:
 
 ```bash
-npm run watch         # watch esbuild
+npm run watch         # esbuild in watch mode
 ```
 
-Carica l'estensione:
+Load the extension:
 
-- In VS Code: apri questa cartella, premi F5 (Extension Development Host).
-- Oppure genera un `.vsix` (`npm run package` richiede `@vscode/vsce`) e
-  installalo con `code --install-extension`.
+- In VS Code: open this folder, press F5 (Extension Development Host).
+- Or produce a `.vsix` (`npm run package` requires `@vscode/vsce`) and
+  install it with `code --install-extension`.
 
-## Registra il server MCP nel tuo agente
+## Registering the MCP server in your agent
 
-Il server è standard: lo stesso `out/mcp-server.js` si registra nella
-configurazione MCP del tuo agente (Kilo, Cursor, Cline, ecc.). Di seguito
-l'esempio per Kilo; gli altri agenti usano il proprio formato di
-configurazione (es. Cursor: `mcp.json`, Cline: pannello MCP). Due scelte
-per Kilo:
+The server is standard: the same `out/mcp-server.js` is registered in your
+agent's MCP configuration (Kilo, Cursor, Cline, etc.). Below is the Kilo
+example; other agents use their own configuration format (e.g. Cursor:
+`mcp.json`, Cline: MCP panel). Two options for Kilo:
 
-**Livello progetto** — in `kilo.json` nella radice del progetto corrente:
+**Project level** — in `kilo.json` at the root of the current project:
 
 ```jsonc
 {
   "mcp": {
     "vscode-ide": {
       "type": "local",
-      "command": ["node", "<dir_estensione>/out/mcp-server.js"]
+      "command": ["node", "<extension_dir>/out/mcp-server.js"]
     }
   }
 }
 ```
 
-**Livello globale** — in `~/.config/kilo/kilo.json` (Windows:
-`%USERPROFILE%\.config\kilo\kilo.json`), così funziona in tutti i progetti:
+**Global level** — in `~/.config/kilo/kilo.json` (Windows:
+`%USERPROFILE%\.config\kilo\kilo.json`), so it works in all projects:
 
 ```jsonc
 {
   "mcp": {
     "vscode-ide": {
       "type": "local",
-      "command": ["node", "<dir_estensione>/out/mcp-server.js"]
+      "command": ["node", "<extension_dir>/out/mcp-server.js"]
     }
   }
 }
 ```
 
-Dopo aver installato l'estensione, `dir_estensione` è
-`~/.vscode/extensions/RiccardoStatuto.vscode-ide-mcp-<versione>/out/mcp-server.js`
-(oppure `Code --list-extensions` + percorso installato).
+After installing the extension, `extension_dir` is
+`~/.vscode/extensions/RiccardoStatuto.vscode-ide-mcp-<version>/out/mcp-server.js`
+(see also `code --list-extensions` + installed path).
 
-I tool risultano disponibili come `vscode-ide_<tool>` (es.
+The tools become available as `vscode-ide_<tool>` (e.g.
 `vscode-ide_go_to_definition`).
 
-## Tool disponibili
+## Available tools
 
-| Tool | Descrizione |
+| Tool | Description |
 |---|---|
-| `get_active_editor` | File attivo: percorso, lingua, cursore, selezione |
-| `show_document` | Apre un documento e porta il cursore su riga/colonna |
-| `go_to_definition` | Definizione del simbolo (LSP) |
-| `find_references` | Riferimenti del simbolo (LSP) |
-| `get_outline` | Outline dei simboli di un file |
-| `start_debug` | Avvia una sessione di debug (per nome o config) |
-| `stop_debug` | Ferma la sessione di debug |
-| `add_breakpoints` | Imposta breakpoint su righe date |
+| `get_active_editor` | Active file: path, language, cursor, selection |
+| `show_document` | Opens a document and moves the cursor to a given line/column |
+| `go_to_definition` | Definition of the symbol (LSP) |
+| `find_references` | References of the symbol (LSP) |
+| `get_outline` | Symbol outline of a file |
+| `start_debug` | Starts a debug session (by name or config) |
+| `stop_debug` | Stops the active debug session |
+| `add_breakpoints` | Sets breakpoints on given lines |
 | `debug_step` | Stepping: over/into/out/continue |
-| `get_stack_frames` | Stack frame (richiede API proposta `DebugAdapterTracker`) |
-| `get_variables` | Variabili di uno scope di debug |
-| `debug_evaluate` | Evaluate un'espressione nella console di debug |
-| `execute_command` | Esegue un comando VS Code per ID, con argomenti opzionali |
-| `get_hover` | Informazioni hover del simbolo sotto il cursore (LSP) |
-| `get_diagnostics` | Errori/avvisi del file attivo (max 200 righe) |
-| `read_file` | Legge il contenuto di un file del workspace |
-| `write_file` | Crea o sovrascrive un file del workspace |
+| `get_stack_frames` | Stack frames (requires the proposed API `DebugAdapterTracker`) |
+| `get_variables` | Variables of a debug scope |
+| `debug_evaluate` | Evaluates an expression in the debug console |
+| `execute_command` | Runs a VS Code command by ID, with optional arguments |
+| `get_hover` | Hover info (type, docs) for the symbol under the cursor (LSP) |
+| `get_diagnostics` | Errors/warnings of the active file (up to 200 lines) |
+| `read_file` | Reads the content of a workspace file |
+| `write_file` | Creates or overwrites a workspace file |
 
-## Soluzione globale
+## Global solution
 
-Per coprire tutti i progetti (anche non-Dart), l'approccio è **language-agnostic**:
-la navigazione usa l'LSP di VS Code e il debug usa le configurazioni di
-`launch.json` del progetto (node, python, go, dart, ecc.). Questo progetto è
-indipendente dal linguaggio.
+To cover all projects (including non-Dart ones), the approach is
+**language-agnostic**: navigation uses VS Code's LSP and debugging uses the
+project's `launch.json` configurations (node, python, go, dart, etc.).
+This project is independent from any language.
 
 ## Troubleshooting
 
-- **"nessun IDE bridge raggiungibile"** → l'estensione non è caricata o il
-  bridge non è avviato. Carica l'estensione (F5) e verifica che il comando
-  `IDE MCP: Avvia bridge` funzioni.
-- **Porta 47810 occupata** → il bridge prova automaticamente le porte
-  47811–47814; il server MCP prova lo stesso elenco nella stessa ordine.
-  Se vuoi cambiare la porta base, modifica `PORT` in `src/ide/bridge.ts` e
-  `PORTS` in `src/mcp/server.ts`, poi `npm run build`.
-- **Stack/variabili tornano "DebugAdapterTracker non disponibile"** → la versione
-  di VS Code non espone l'API proposta; aggiorna VS Code all'ultima versione.
+- **"IDE bridge not reachable"** → the extension is not loaded or the
+  bridge is not started. Load the extension (F5) and verify the
+  `IDE MCP: Start bridge` command works.
+- **Port 47810 in use** → the bridge automatically tries ports
+  47811–47814; the MCP server tries the same list in the same order.
+  To change the base port, edit `PORT` in `src/ide/bridge.ts` and
+  `PORTS` in `src/mcp/server.ts`, then run `npm run build`.
+- **Stack/variables return "DebugAdapterTracker not available"** → your
+  VS Code version does not expose the proposed API; update VS Code to the
+  latest version.
 
-## Fonti (ricerca web)
+## References (web research)
 
 - https://code.visualstudio.com/api/references/vscode-api
 - https://code.visualstudio.com/api/extension-guides/debugger-extension
